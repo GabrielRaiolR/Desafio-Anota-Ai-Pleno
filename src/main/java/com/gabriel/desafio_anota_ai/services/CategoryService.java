@@ -54,8 +54,9 @@ public class CategoryService {
     }
 
     public void deleteCategory(String id) {
-        Category category = this.repository.findById(id).orElseThrow(CategoryNotFoundException:: new);
+        Category category = this.repository.findById(id).orElseThrow(CategoryNotFoundException::new);
         this.repository.delete(category);
+        this.awsSnsService.publish(new MessageDTO(category.deleteToString()));
     }
 
     public List<Category> getAllByCategoryId(String categoryId) {
