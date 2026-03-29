@@ -1,6 +1,5 @@
 package com.gabriel.desafio_anota_ai.services;
 
-import com.gabriel.desafio_anota_ai.domain.category.Category;
 import com.gabriel.desafio_anota_ai.domain.product.Product;
 import com.gabriel.desafio_anota_ai.domain.product.ProductDTO;
 import com.gabriel.desafio_anota_ai.domain.product.exceptions.ProductNotFoundException;
@@ -25,11 +24,10 @@ public class ProductService {
     }
 
     public Product insertProduct(ProductDTO productData) {
-        Category category = this.categoryService.getCategoryById(productData.categoryId());
+        this.categoryService.getCategoryById(productData.categoryId());
         Product newProduct = new Product(productData);
-        newProduct.setCategory(category);
         this.productRepository.save(newProduct);
-        this.awsSnsService.publish(new MessageDTO(newProduct.getOwnerId()));
+        this.awsSnsService.publish(new MessageDTO(newProduct.toString()));
         return newProduct;
     }
 
@@ -40,8 +38,9 @@ public class ProductService {
     public Product updateProduct(String id, ProductDTO productData) {
         Product product = this.productRepository.findById(id).orElseThrow(ProductNotFoundException::new);
 
-        if (productData.categoryId() != null) {
-            this.categoryService.findCategoryById(productData.categoryId()).ifPresent(product::setCategory);
+        if (productData.categoryId() != null && !productData.categoryId().isBlank()) {
+            this.categoryService.getCategoryById(productData.categoryId());
+            product.setCategory(productData.categoryId());
         }
         if (productData.title() != null && !productData.title().isEmpty()) {
             product.setTitle(productData.title());
@@ -57,7 +56,7 @@ public class ProductService {
         }
 
         this.productRepository.save(product);
-        this.awsSnsService.publish(new MessageDTO(product.getOwnerId()));
+        this.awsSnsService.publish(new MessageDTO(product.toString()));
 
         return product;
     }

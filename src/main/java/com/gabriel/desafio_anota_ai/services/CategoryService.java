@@ -4,6 +4,9 @@ import com.gabriel.desafio_anota_ai.domain.category.Category;
 import com.gabriel.desafio_anota_ai.domain.category.CategoryDTO;
 import com.gabriel.desafio_anota_ai.domain.category.exceptions.CategoryNotFoundException;
 import com.gabriel.desafio_anota_ai.repositories.CategoryRepository;
+import com.gabriel.desafio_anota_ai.services.aws.AwsSnsService;
+import com.gabriel.desafio_anota_ai.services.aws.MessageDTO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -13,15 +16,22 @@ import java.util.Optional;
 @Service
 public class CategoryService {
 
-    private CategoryRepository repository;
+    private final CategoryRepository repository;
 
-    public CategoryService(CategoryRepository repository) {
+    private final AwsSnsService awsSnsService;
+
+    public CategoryService(CategoryRepository repository,  AwsSnsService awsSnsService) {
         this.repository = repository;
+        this.awsSnsService = awsSnsService;
     }
 
     public Category insertCategory(CategoryDTO categoryData) {
         Category newCategory = new Category(categoryData);
+
         this.repository.save(newCategory);
+
+        this.awsSnsService.publish(new MessageDTO(newCategory.toString()));
+
         return newCategory;
     }
 
@@ -30,9 +40,16 @@ public class CategoryService {
     }
 
     public Category updateCategory(String id, CategoryDTO categoryData) {
-        Category category = this.repository.findById(id).orElseThrow(CategoryNotFoundException:: new);
-        if (!categoryData.description().isEmpty()) category.setTitle(categoryData.title());
+        Category category = this.repository.findById(id)
+                .orElseThrow(CategoryNotFoundException::new);
+
+        if(!categoryData.title().isEmpty()) category.setTitle(categoryData.title());
+        if(!categoryData.description().isEmpty()) category.setDescription(categoryData.description());
+
+        this.awsSnsService.publish(new MessageDTO(category.toString()));
+
         this.repository.save(category);
+
         return category;
     }
 

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.json.JSONObject;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -30,5 +31,24 @@ public class Category {
         this.ownerId = categoryDTO.ownerId();
     }
 
+    @Override
+    public String toString(){
+        JSONObject json = new JSONObject();
+        json.put("id", id);
+        json.put("title", title);
+        json.put("description", description);
+        json.put("ownerId", ownerId);
+        json.put("type", "categoria");
 
+        return json.toString();
+    }
+
+    public String deleteToString(){
+        JSONObject json = new JSONObject();
+        json.put("id", this.id);
+        json.put("ownerId", this.ownerId);
+        json.put("type", "delete-categoria");
+
+        return json.toString();
+    }
 }
